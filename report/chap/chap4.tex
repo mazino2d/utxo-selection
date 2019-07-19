@@ -1,0 +1,73 @@
+﻿\section{Đánh giá mô hình}\label{eval}
+
+\noindent
+\textbf{Dữ liệu đầu vào} : Toàn bộ các text file(.txt) trong thư mục dataset() tải trên BKEL.\\
+\textbf{Dữ liệu đầu ra}  : output.txt được tạo ra bởi python script, 10 dòng đầu của output.txt :
+
+\begin{lstlisting}
+    // Total transaction size : 85470
+    // Total number of selected UTXOs : 314
+    
+    //filename //status //y //z_s //z_v //epsilon //totalSelectedUTXOs
+    5ad448a959678302d59e6f75.txt    Optimal   216 34     66581864      7359 1
+    5ad44bfdce94cf05c955f862.txt    Optimal   364 34         1366       756 2
+    5ad44e0ece94cf05c955f864.txt    Optimal   250 34     39454264      1369 1
+    5ad44e1bce94cf05c955f865.txt    Optimal   364 34         1365       758 2
+    5ad4503ece94cf05c955f868.txt    Optimal   364 34      1037718     20641 2
+    5ad4517cce94cf05c955f86a.txt    Optimal   250 34    695247540      6187 1
+\end{lstlisting}
+
+\noindent
+\textbf{Hiện thực}  : Python sử dụng PuLP package. Đoạn code chính của chương trình.
+
+\begin{lstlisting}
+    opt_model = LpProblem(name = "Model_1", sense = LpMinimize)
+
+    # # * Declare variables * # #
+    # Decision variables
+    X = [LpVariable(name="x_{0}".format(i), cat = LpBinary) for i in range(n)]
+
+    # Intermediate variables
+    sigma = LpVariable(name = "sig", cat = LpBinary)
+    # Size of change output
+    # A value of change output
+    z_v   = LpVariable(name = "z_v", lowBound = 0, cat = LpContinuous)
+
+    # # * Objective Function * # #
+    y = lpDot(S_u, X) + lpSum(S_o) + z_s
+
+    opt_model += y
+
+    # # * Constraint * # #
+    # A transaction size may not exceed maximum block data size
+    opt_model += y <= M
+
+    # A transaction must have sufficient value for consuming
+    opt_model += lpDot(V_u, X) == lpSum(V_o) + alpha*y + z_v
+
+    # All the transaction outputs must be higher than the dust threshold
+    opt_model += lpSum(V_o) >= T
+
+    # z_s = (z_v > epsilon)? beta : 0
+    large = sys.maxsize
+    opt_model += z_v + large*(1 - sigma) >= epsilon + 0.001
+    opt_model += z_v - large*(sigma)     <= epsilon
+    opt_model += z_s >= sigma*beta
+
+    opt_model.solve()
+\end{lstlisting}
+
+\noindent
+\textbf{Kết quả :}
+\begin{itemize}
+    \item Mô hình 1
+    \begin{itemize}
+        \item Tổng kích thước giao dịch của các file dữ liệu : 85470
+        \item Tổng các UTXO được chọn của các file dữ liệu : 314
+    \end{itemize}
+    \item Mô hình 2(gamma = 1)
+    \begin{itemize}
+        \item Tổng kích thước giao dịch của các file dữ liệu : 132218
+        \item Tổng các UTXO được chọn của các file dữ liệu : 629
+    \end{itemize}
+\end{itemize}

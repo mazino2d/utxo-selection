@@ -1,0 +1,130 @@
+\newpage
+\section{Mô hình đề xuất}\label{model}
+
+\textbf{Mục tiêu} Xác định một tập hợp con của tập UTXO có giá cả phải chăng sao cho thỏa mãn ràng buộc cứng $H_1$ và các ràng buộc mềm $S_1$.\\
+\textbf{Dữ liệu đầu vào}
+
+\begin{table}[!h]
+	\centering
+	\def\arraystretch{1.5}
+	\begin{tabular}{|c|l|}
+	\hline
+	Các tham số đầu vào          				 & Mô tả chi tiết                                                                \\ \hline
+	$U = \left\{ {{u_1},...,{u_n}} \right\}$	 & Tập hợp các UTXO                                                              \\ \hline
+	$O = \left\{ {{o_1},...,{o_n}} \right\}$	 & Tập hợp các đầu ra của giao dịch                                                 \\ \hline
+	${V^u} = \left\{ {v_1^u,...,v_n^u} \right\}$ & Tập hợp chứa giá trị của các đầu vào giao dịch                                                       \\ \hline
+	${V^o} = \left\{ {v_1^o,...,v_m^o} \right\}$ & Tập hợp chứa giá trị của các đầu ra giao dịch                             \\ \hline
+	${S^u} = \left\{ {s_1^u,...,s_n^u} \right\}$ & Tập hợp chứa kích của các đầu vào giao dịch            \\ \hline
+	${S^o} = \left\{ {s_1^o,...,s_m^o} \right\}$ & Tập hợp chứa kích của các đầu ra giao dịch                                          \\ \hline
+	$M$						 					 & Kích thước lớn nhất có thể của một giao dịch                                              \\ \hline
+	$\alpha$                     				 & mức phí của giao giao dịch($\alpha = 10^{-8}BTC$)                                                                   \\ \hline
+	$T$		                  					 & ngưỡng dust                                                             \\ \hline
+	$\epsilon$ 								 	 & giá trị nhỏ nhất của thay đổi đầu ra                                                   \\ \hline
+	\end{tabular}
+
+	\caption{CÁC THAM SỐ ĐẦU VÀO CỦA CÔNG VIỆC ĐÃ NÊU}
+\end{table} 
+
+\noindent 
+\textbf{Output}
+\begin{itemize}
+    \item Một tập hợp UTXO được chọn có thể chỉ chứa một output trùng khớp chính xác.
+    \item Một đầu ra thay đổi(có thể có). 
+\end{itemize}
+\textbf{Ràng buộc cứng} $H_1$
+\begin{enumerate}
+    \item Một giao dịch phải có đủ giá trị để tiêu thụ.
+    \item Kích thước giao dịch không được vượt quá kích thước khối dữ liệu tối đa.
+    \item Tất cả các đầu ra giao dịch phải cao hơn ngưỡng DUST để chắc chắn rằng giao dịch này được chuyển tiếp đến mạng và được xác nhận.  
+\end{enumerate}
+\textbf{Ràng buộc mềm} $S_1$
+\begin{enumerate}
+    \item Kích thước giao dịch được giảm thiểu.
+    \item Số lượng UTXO đã chọn được tối đa hóa để thu nhỏ kích thước nhóm UTXO.
+\end{enumerate}
+
+\newpage
+\subsection{Mô hình 1}
+Mô hình 1 là để giảm thiểu phí giao dịch như sau.
+\begin{enumerate}
+    \item Các biến
+    \begin{itemize}
+        \item Biến quyết định
+        \begin{align}
+            x_i = 
+                \begin{cases}
+                    1, & \text{nếu UTXO $u_i$ được chọn} \\
+                    0, & \text{ngược lại}
+                \end{cases}
+        \end{align}
+
+        \item Biến trung gian:
+        \begin{itemize}
+        \item $y$ : Kích thước giao dịch.
+        \item $z_v$: Giá trị của thay đổi đầu ra.
+        \item $z_s$: Kích thước của thay đổi đầu ra.
+        \end{itemize}
+
+        \begin{align}
+			z_s = 
+			\begin{cases}
+				0, & 0\le z_v \le \varepsilon \\
+				\beta, & z_v > \varepsilon
+    		\end{cases}
+    	\end{align}
+    
+    \end{itemize}
+    
+    \item Các ràng buộc
+		\begin{itemize}
+			
+        \item Kích thước giao dịch không được vượt quá kích thước khối dữ liệu tối đa.
+        \begin{align}
+        y= \displaystyle \sum_{i|u_i\in U}s^u_i*x_i +\displaystyle \sum_{j|o_j\in O}s^o_j + z_s \le M
+        \end{align}
+       
+        \item Một giao dịch phải có đủ giá trị để tiêu thụ.
+        \begin{align}
+        \displaystyle \sum_{i|u_i\in U}v^u_i*x_i = \displaystyle \sum_{j|o_j\in O}v^o_j + \alpha * y + z_v 
+		\end{align}
+		
+        \item Tất cả các đầu ra giao dịch phải cao hơn ngưỡng DUST để chắc chắn rằng giao dịch này được chuyển tiếp đến mạng và được xác nhận. 
+        \begin{align}
+        \forall v \in {V^o},v \ge T
+		\end{align}
+		
+        \item Mối quan hệ giữa giá trị đầu ra thay đổi $z_v$ và kích thước $z_s$ của nó được xác định như sau.
+        \begin{align}
+        z_s \le \lfloor\dfrac{z_v}{\varepsilon}\rfloor * \beta
+        \end{align}
+		Nếu $z_v \le \varepsilon$ thì $z_s$ bằng $0$; mặt khác thì $z_s$ bằng $\beta$
+   
+        \end{itemize}
+
+        \item Hàm mục tiêu: 
+		\begin{align}
+		\text minimize \enspace y
+		\end{align}
+\end{enumerate}
+
+\subsection{Mô hình 2}
+Mục tiêu của Model 2 là để tìm maximize số lượng mà UTXO được chọn để thu hẹp lại kích thước của nhóm UTXO ban đầu. Model 2 sẽ được xây dựng dựa trên kết quả thu được từ Model 1 như sau:
+\begin{enumerate}
+    \item Các biến: bao gồm tất cả các biến trong Model 1
+    
+    \item Các ràng buộc: bao gồm tất cả các ràng buộc trong Model 1 và thêm một ràng buộc như sau:
+	\begin{align}
+	y \le (1 + \gamma) \times Y
+	\end{align}
+
+    \begin{itemize}
+        \item $Y$ là min của kích thước giao dịch thu được từ Model 1
+        \item $\gamma$: là 1 hệ số ($0 \le y \le 1$)
+	\end{itemize}
+	
+    Nếu $\gamma$ tiến đến 0, chúng ta muốn giữ lại kích thước giao dịch nhỏ nhất thu được từ kết quả của Model 1. Mặc khác, một giao dịch có kích thước phù hợp khi nó được tạo ra bởi một số lượng UTXO càng lớn càng tốt. 
+    \item Hàm mục tiêu:
+        \begin{align}
+            maximize \enspace (\displaystyle \sum_{i|u_i\in U}x_i - z_s/\beta)
+        \end{align}
+\end{enumerate}
