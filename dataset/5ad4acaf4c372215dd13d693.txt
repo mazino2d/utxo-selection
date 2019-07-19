@@ -1,0 +1,14 @@
+// parameters
+// n \t m \t outValue \t M \t alpha \t T \t epsilon \t beta \t txsize \t iosize \t cout \t coutValue
+3	2	19414716	1048576	9.25	5051	5051	34	2088	512	0	0
+
+// vin
+// id \t size \t value \t confirm \t vout \t choosen \t txid
+1	148	4664480	299	0	1	242d74150fcf524f94db4aa3551e18b9f8553913bc4d4bd8183aa3edf4de4298
+2	148	11590600	22	1	1	2fbec7b2f36dbf85a782a0aa80fe3b98eda811a191b58fbf6bf2c22c6f74874c
+3	148	3178950	3	0	1	c8a4188aa5a411bf8d88fbcb559a9ba3a8480d4f3e1e392b7caaa9dd4aebaf7a
+
+// vout
+// id \t size \t value
+1	34	2863316
+2	34	16551400
